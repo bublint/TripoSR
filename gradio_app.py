@@ -58,9 +58,9 @@ def preprocess(input_image, do_remove_background, foreground_ratio):
     return image
 
 
-def generate(image, mc_resolution, formats=["obj", "glb"]):
+def generate(image, mc_resolution, threshold, formats=["obj", "glb"]):
     scene_codes = model(image, device=device)
-    mesh = model.extract_mesh(scene_codes, resolution=mc_resolution)[0]
+    mesh = model.extract_mesh(scene_codes, resolution=mc_resolution, threshold=threshold)[0]
     mesh = to_gradio_3d_orientation(mesh)
     rv = []
     for format in formats:
@@ -118,6 +118,13 @@ with gr.Blocks(title="TripoSR") as interface:
                         value=256,
                         step=32
                     )
+                    threshold = gr.Slider(
+                        label="Cell Merge Threshold",
+                        minimum=1,
+                        maximum=100,
+                        value=25,
+                        step=1,
+                    )
             with gr.Row():
                 submit = gr.Button("Generate", elem_id="generate", variant="primary")
         with gr.Column():
@@ -163,7 +170,7 @@ with gr.Blocks(title="TripoSR") as interface:
         outputs=[processed_image],
     ).success(
         fn=generate,
-        inputs=[processed_image, mc_resolution],
+        inputs=[processed_image, mc_resolution, threshold],
         outputs=[output_model_obj, output_model_glb],
     )
 
